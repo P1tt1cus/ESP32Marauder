@@ -53,7 +53,10 @@ Direct USB checks confirmed profile/build/capabilities, rejection of channels
 manual policy, channels 1–13, actual TX maximum **70 quarter-dBm (17.5 dBm)**,
 and zero radio errors. The configured cap remains 80 quarter-dBm (20 dBm).
 After `stopscan`, active/verified became false and channel/power unavailable.
-No active RF operation was tested. GPIO companion screen verification is pending.
+No active RF operation was tested. On Qwerty, Studio 1.3 startup Check link,
+capability-gated Radio profile/Diagnostics entries and their GPIO replies were
+visually verified. Radio profile correctly shows Wi-Fi off/unavailable while
+stopped, including the configured cap and scrollable error details.
 Artifacts, hashes and radio-only runtime evidence are retained locally in ignored
 `.artifacts/studio.2-au/`; no network identifiers/captures are retained there.
 
