@@ -8,7 +8,7 @@ the release verified on our ZY-ESP32. Building does not flash the connected devi
 ## Our target
 
 `studio-target.json` records **STUDIO_ZY_ESP32**, profile `studio-zy-esp32`, build
-`studio.1`: ESP32-D0WD-V3, 4 MB flash, UART0 at 115200. It inherits LDDB's chip,
+`studio.2-au`: ESP32-D0WD-V3, 4 MB flash, UART0 at 115200. It inherits LDDB's chip,
 BLE and CSI configuration, then removes SD, GPS, RGB LED, screen/touch controls,
 battery monitoring and PSRAM support. This is not the official ESP32-S2 board.
 The existing no-PSRAM memory limits remain in place.
@@ -26,6 +26,24 @@ and absent hardware. `diagnostics` reports chip, flash, heap, reset reason, scan
 mode and uptime; `diagnostics --machine <tx>` returns structured protocol 1 JSON.
 These commands do not start a radio scan.
 
+## Australian Wi-Fi profile
+
+Studio applies `esp_wifi_set_country_code("AU", false)` at driver initialization
+and before each start, retaining manual AU channels 1–13 across Arduino and CSI
+lifecycles. Linker wrappers validate channel requests and driver readback, cap
+TX maximum at 80 quarter-dBm (20 dBm), and verify the cap after each start.
+Failure to apply country or verify startup power prevents a successful start.
+The cap is a conducted driver setting, not an EIRP measurement/certification.
+
+`radiostatus` and `radiostatus --machine studio` report live driver country,
+channel range, current channel, TX maximum and read/apply/error counters. The
+same data is included in protocolinfo and machine diagnostics. Read-only
+queries never initialize/start Wi-Fi; inactive channel/power are `null`.
+The paired Studio 1.3 companion displays these readings and validates them
+before showing AU confirmation. Legacy companions still accept protocolinfo.
+Build/runtime status: host checks pass; target build and USB runtime checks
+are in progress. This source change has not yet been flashed to our board.
+
 Build with `.github/workflows/studio-build.yml`: Arduino ESP32 **3.3.4**, NimBLE
 **2.3.8**, `esp32:esp32:d32:PartitionScheme=min_spiffs`. This follows the upstream
 LDDB recipe with our build flag. `platformio.ini` runs native tests, not firmware.
@@ -35,7 +53,8 @@ merged image, ELF and map. Do not flash the merged image over existing data as a
 routine upgrade; verify the device and partition layout first.
 
 Run `python3 tools/test_studio_profile.py` and
-`python3 tools/test_spiffs_machine_protocol.py` for host checks. Firmware build
+`python3 tools/test_spiffs_machine_protocol.py` and
+`python3 tools/test_studio_radio.py` for host checks. Firmware build
 success is separate from boot/UART verification on the physical board.
 
 Initialize pinned library submodules with:
