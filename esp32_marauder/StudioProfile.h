@@ -15,5 +15,5 @@
 #undef HAS_DIRECT_UPLOAD
 #define HAS_SERIAL_CAPTURE
 #define STUDIO_PROFILE_ID "studio-zy-esp32"
-#define STUDIO_BUILD_ID "studio.1"
+#define STUDIO_BUILD_ID "studio.2-au"
 #endif

@@ -28,7 +28,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           
       - name: Test Studio profile
-        run: python3 tools/test_studio_profile.py
+        run: |
+          python3 tools/test_studio_profile.py
+          python3 tools/test_studio_radio.py
 
       - name: Install Arduino CLI
         run: |
@@ -239,12 +241,15 @@ jobs:
         if: matrix.board.flag == 'MARAUDER_T_DONGLE_C5'
         run: cp installer/partitions/t_dongle_c5.csv esp32_marauder/partitions.csv
 
+      - name: Write Studio compiler flags
+        run: echo "-DSTUDIO_ZY_ESP32 -DSTUDIO_RADIO_WRAPPERS" > "$GITHUB_WORKSPACE/studio-build-flags.txt"
+
       - name: Build Marauder for ${{ matrix.board.name }}
         uses: ArminJo/arduino-test-compile@v3.3.0
         with:
           sketch-names: esp32_marauder.ino
           arduino-board-fqbn: ${{ matrix.board.fbqn }}
-          extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags='-D${{ matrix.board.flag }}'"
+          extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags=@${{ github.workspace }}/studio-build-flags.txt --build-property compiler.c.elf.extra_flags=-Wl,-zmuldefs,--wrap=esp_wifi_init,--wrap=esp_wifi_start,--wrap=esp_wifi_stop,--wrap=esp_wifi_deinit,--wrap=esp_wifi_set_channel,--wrap=esp_wifi_set_max_tx_power,--wrap=esp_wifi_set_config"
           arduino-platform: esp32:esp32@${{ matrix.board.idf_ver }}
           platform-url: https://github.com/espressif/arduino-esp32/releases/download/${{ matrix.board.idf_ver }}/package_esp32_dev_index.json
 

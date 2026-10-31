@@ -8,7 +8,7 @@ the release verified on our ZY-ESP32. Building does not flash the connected devi
 ## Our target
 
 `studio-target.json` records **STUDIO_ZY_ESP32**, profile `studio-zy-esp32`, build
-`studio.1`: ESP32-D0WD-V3, 4 MB flash, UART0 at 115200. It inherits LDDB's chip,
+`studio.2-au`: ESP32-D0WD-V3, 4 MB flash, UART0 at 115200. It inherits LDDB's chip,
 BLE and CSI configuration, then removes SD, GPS, RGB LED, screen/touch controls,
 battery monitoring and PSRAM support. This is not the official ESP32-S2 board.
 The existing no-PSRAM memory limits remain in place.
@@ -26,6 +26,45 @@ and absent hardware. `diagnostics` reports chip, flash, heap, reset reason, scan
 mode and uptime; `diagnostics --machine <tx>` returns structured protocol 1 JSON.
 These commands do not start a radio scan.
 
+## Australian Wi-Fi profile
+
+Studio applies `esp_wifi_set_country_code("AU", false)` at driver initialization
+and before each start, retaining manual AU channels 1–13 across Arduino and CSI
+lifecycles. Linker wrappers validate channel requests and driver readback, cap
+TX maximum at 80 quarter-dBm (20 dBm), and verify the cap after each start.
+Failure to apply country or verify startup power prevents a successful start.
+The cap is a conducted driver setting, not an EIRP measurement/certification.
+
+`radiostatus` and `radiostatus --machine studio` report live driver country,
+channel range, current channel, TX maximum and read/apply/error counters. The
+same data is included in protocolinfo and machine diagnostics. Read-only
+queries never initialize/start Wi-Fi; inactive channel/power are `null`.
+The paired Studio 1.3 companion displays these readings and validates them
+before showing AU confirmation. Legacy companions still accept protocolinfo.
+Installation/runtime status (2026-10-31): **studio.2-au is installed** on our
+ESP32-D0WD-V3 revision 3.1, 4 MB board. Host/native checks and target CI pass
+([build run 41201143370](https://github.com/P1tt1cus/ESP32Marauder/actions/runs/41201143370),
+source `a77fad3`). The 1,410,944-byte application was flashed only at `0x10000`
+and verified. Actual partition/OTA data matched the recorded baseline. NVS,
+SPIFFS, partition and OTA bytes were read before/after and remained unchanged.
+
+Direct USB checks confirmed profile/build/capabilities, rejection of channels
+0/14/256, and passive operation on channels 13 and 1. The driver reported AU,
+manual policy, channels 1–13, actual TX maximum **70 quarter-dBm (17.5 dBm)**,
+and zero radio errors. The configured cap remains 80 quarter-dBm (20 dBm).
+After `stopscan`, active/verified became false and channel/power unavailable.
+No active RF operation was tested. GPIO companion screen verification is pending.
+Artifacts, hashes and radio-only runtime evidence are retained locally in ignored
+`.artifacts/studio.2-au/`; no network identifiers/captures are retained there.
+
+USB connection note: manual BOOT/EN worked when the serial port was already open.
+Esptool closes its port on failed `connect()`, so merely keeping a Python process
+alive does not keep the connection open. A persistent serial client with inactive
+DTR/RTS then connected through the default reset sequence and remained open
+through flash/readback/boot checks. A bare ROM `flash_id()` before attaching flash
+returned `0xffffff`; after the RAM stub and `attach_flash()`, the correct ID was
+`0x16405e` (4 MB). Do not interpret the unattached result as a failed flash chip.
+
 Build with `.github/workflows/studio-build.yml`: Arduino ESP32 **3.3.4**, NimBLE
 **2.3.8**, `esp32:esp32:d32:PartitionScheme=min_spiffs`. This follows the upstream
 LDDB recipe with our build flag. `platformio.ini` runs native tests, not firmware.
@@ -35,7 +74,8 @@ merged image, ELF and map. Do not flash the merged image over existing data as a
 routine upgrade; verify the device and partition layout first.
 
 Run `python3 tools/test_studio_profile.py` and
-`python3 tools/test_spiffs_machine_protocol.py` for host checks. Firmware build
+`python3 tools/test_spiffs_machine_protocol.py` and
+`python3 tools/test_studio_radio.py` for host checks. Firmware build
 success is separate from boot/UART verification on the physical board.
 
 Initialize pinned library submodules with:

@@ -2105,7 +2105,7 @@ void WiFiScan::RunSetup() {
 
     esp_wifi_init(&cfg);
     #ifdef HAS_IDF_3
-      esp_wifi_set_country(&country);
+      configureCountry();
       esp_event_loop_create_default();
     #endif
     esp_wifi_set_mode(WIFI_AP_STA);
@@ -3098,7 +3098,7 @@ void WiFiScan::startWiFiAttacks(uint8_t scan_mode, uint16_t color, const char* t
   packets_sent = 0;
   esp_wifi_init(&cfg);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
   #endif
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
   if (scan_mode != WIFI_ATTACK_SAE_COMMIT) {
@@ -3366,7 +3366,7 @@ void WiFiScan::getMAC(bool get_sta, uint8_t* mac) {
   char *buf;
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
   #endif
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
   esp_wifi_set_mode(WIFI_MODE_STA);
@@ -4417,7 +4417,7 @@ void WiFiScan::RunAPScan(uint8_t scan_mode, uint16_t color) {
 
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, apSnifferCallbackFull);
@@ -5184,7 +5184,7 @@ void WiFiScan::RunPacketMonitor(uint8_t scan_mode, uint16_t color) {
   //Serial.println(F("Running packet scan..."));
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, wifiSnifferCallback);
@@ -5272,7 +5272,7 @@ void WiFiScan::RunEapolScan(uint8_t scan_mode, uint16_t color) {
 
   esp_wifi_init(&cfg);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
@@ -5318,7 +5318,7 @@ void WiFiScan::RunPineScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, pineScanSnifferCallback);
@@ -5354,7 +5354,7 @@ void WiFiScan::RunMultiSSIDScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, multiSSIDSnifferCallback);
@@ -5379,7 +5379,7 @@ void WiFiScan::RunPwnScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, beaconSnifferCallback);
@@ -6268,7 +6268,7 @@ void WiFiScan::setBaseMacAddress(uint8_t macAddr[6]) {
         this->shutdownWiFi();
         esp_wifi_init(&cfg2);
         #ifdef HAS_IDF_3
-          esp_wifi_set_country(&country);
+          configureCountry();
           esp_event_loop_create_default();
         #endif
         this->setWiFiMode(WIFI_MODE_AP, beaconSnifferCallback);
@@ -6447,7 +6447,7 @@ void WiFiScan::executeWarDrive() {
           }
           this->wifi_initialized = true;
           #ifdef HAS_IDF_3
-            esp_wifi_set_country(&country);
+            configureCountry();
             esp_event_loop_create_default();
           #endif
           this->setWiFiMode(WIFI_MODE_AP, beaconSnifferCallback);
@@ -6902,7 +6902,7 @@ void WiFiScan::RunBeaconScan(uint8_t scan_mode, uint16_t color) {
   
     esp_wifi_init(&cfg2);
     #ifdef HAS_IDF_3
-      esp_wifi_set_country(&country);
+      configureCountry();
       esp_event_loop_create_default();
     #endif
     this->setWiFiMode(WIFI_MODE_NULL, beaconSnifferCallback);
@@ -6957,7 +6957,7 @@ void WiFiScan::RunRawScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   this->setWiFiMode(WIFI_MODE_NULL, beaconSnifferCallback);
@@ -6986,7 +6986,7 @@ void WiFiScan::RunDeauthScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   esp_wifi_set_ps(WIFI_PS_NONE);
@@ -7021,7 +7021,7 @@ void WiFiScan::RunSAEScan(uint8_t scan_mode, uint16_t color) {
   else
     esp_wifi_init(&cfg);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   if (scan_mode != WIFI_ATTACK_SAE_COMMIT)
@@ -7118,7 +7118,7 @@ void WiFiScan::RunProbeScan(uint8_t scan_mode, uint16_t color) {
   
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   if (scan_mode != BT_SCAN_FLOCK)
@@ -10969,10 +10969,25 @@ bool WiFiScan::filterActive() {
 #endif
 // GCOVR_EXCL_STOP
 
-void WiFiScan::changeChannel(int chan) {
-  if (chan != -1)
-    this->set_channel = chan;
-  esp_wifi_set_channel(this->set_channel, WIFI_SECOND_CHAN_NONE);
+bool WiFiScan::changeChannel(int chan) {
+  #ifdef STUDIO_ZY_ESP32
+    const int requested = chan == -1 ? this->set_channel : chan;
+    if(marauder::studioRadioValidateChannel(requested) != ESP_OK) return false;
+    // Remember a valid request while the radio is off; do not report a failed
+    // driver call during normal boot/scan preparation as a connection fault.
+    if(marauder::studioRadioRunning()) {
+      if(esp_wifi_set_channel(requested, WIFI_SECOND_CHAN_NONE) != ESP_OK) {
+        uint8_t actual;
+        wifi_second_chan_t secondary;
+        if(esp_wifi_get_channel(&actual, &secondary) == ESP_OK) this->set_channel = actual;
+        return false;
+      }
+    }
+    this->set_channel = requested;
+  #else
+    if (chan != -1) this->set_channel = chan;
+    esp_wifi_set_channel(this->set_channel, WIFI_SECOND_CHAN_NONE);
+  #endif
   delay(1);
   #ifdef HAS_SCREEN
     #if defined(HAS_ILI9341) || (defined(MARAUDER_MINI_V3) && !defined(DUAL_MINI_C5)) || \
@@ -10988,6 +11003,7 @@ void WiFiScan::changeChannel(int chan) {
       #endif
     }
   #endif
+  return true;
 }
 
 // Function to cycle to the next channel
@@ -11048,7 +11064,7 @@ void WiFiScan::channelHop(bool filtered, bool ranged) {
 
         // Pick channel like normal
         this->set_channel = this->set_channel + 1;
-        if (this->set_channel > 14) {
+        if (this->set_channel > MAX_CHANNEL) {
           this->set_channel = 1;
         }
 

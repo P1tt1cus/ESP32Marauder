@@ -3,6 +3,7 @@
 #ifdef STUDIO_ZY_ESP32
 #include "esp_heap_caps.h"
 #include "esp_system.h"
+#include "StudioRadio.h"
 #endif
 
 // GCOVR_EXCL_START -- serial protocol output depends on Arduino Serial.
@@ -293,6 +294,21 @@ void CommandLine::runCommand(String input) {
       Serial.println(unsupported);
       return;
     }
+    if(cmd_args.get(0) == "radiostatus") {
+      const int machine_arg = this->argSearch(&cmd_args, "--machine");
+      const String tx = machine_arg >= 0 ? cmd_args.get(machine_arg + 1) : "";
+      if(machine_arg >= 0 && !validTransactionId(tx)) {
+        machineResult(tx, "radiostatus", "error", "INVALID_TRANSACTION");
+      } else if(machine_arg >= 0) {
+        char radio[512];
+        if(!marauder::studioRadioJson(radio, sizeof(radio))) {
+          machineResult(tx, "radiostatus", "error", "RADIO_REPORT_TOO_LARGE");
+          return;
+        }
+        Serial.printf("@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"radiostatus\",\"status\":\"success\",\"profile\":\"%s\",\"radio\":%s}\n", tx.c_str(), STUDIO_PROFILE_ID, radio);
+      } else marauder::studioRadioPrint();
+      return;
+    }
     if(cmd_args.get(0) == "diagnostics") {
       int machine_arg = this->argSearch(&cmd_args, "--machine");
       String tx = machine_arg >= 0 ? cmd_args.get(machine_arg + 1) : "";
@@ -300,16 +316,22 @@ void CommandLine::runCommand(String input) {
         machineResult(tx, "diagnostics", "error", "INVALID_TRANSACTION");
         return;
       }
+      char radio[512];
+      if(!marauder::studioRadioJson(radio, sizeof(radio))) {
+        machineResult(tx, "diagnostics", "error", "RADIO_REPORT_TOO_LARGE");
+        return;
+      }
       const unsigned largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
       if(machine_arg >= 0) {
-        Serial.printf("@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"diagnostics\",\"status\":\"success\",\"code\":\"OK\",\"profile\":\"%s\",\"chip\":\"%s\",\"flashBytes\":%u,\"cpuMHz\":%u,\"freeHeap\":%u,\"minimumHeap\":%u,\"largestBlock\":%u,\"resetReason\":%d,\"scanMode\":%d,\"serialCapture\":%s,\"uptimeMs\":%lu}\n",
+        Serial.printf("@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"diagnostics\",\"status\":\"success\",\"code\":\"OK\",\"profile\":\"%s\",\"chip\":\"%s\",\"flashBytes\":%u,\"cpuMHz\":%u,\"freeHeap\":%u,\"minimumHeap\":%u,\"largestBlock\":%u,\"resetReason\":%d,\"scanMode\":%d,\"serialCapture\":%s,\"uptimeMs\":%lu,\"radio\":%s}\n",
           tx.c_str(), STUDIO_PROFILE_ID, ESP.getChipModel(), ESP.getFlashChipSize(), ESP.getCpuFreqMHz(),
           ESP.getFreeHeap(), ESP.getMinFreeHeap(), largest, (int)esp_reset_reason(),
-          wifi_scan_obj.currentScanMode, wifi_scan_obj.save_serial ? "true" : "false", (unsigned long)millis());
+          wifi_scan_obj.currentScanMode, wifi_scan_obj.save_serial ? "true" : "false", (unsigned long)millis(), radio);
       } else {
         Serial.printf("Studio ZY-ESP32\nChip: %s / %u MHz\nFlash: %u bytes\nHeap free/min: %u / %u\nLargest block: %u\nReset reason: %d\nScan mode: %d\nUART: 115200\nUptime: %lu ms\n",
           ESP.getChipModel(), ESP.getCpuFreqMHz(), ESP.getFlashChipSize(), ESP.getFreeHeap(),
           ESP.getMinFreeHeap(), largest, (int)esp_reset_reason(), wifi_scan_obj.currentScanMode, (unsigned long)millis());
+        marauder::studioRadioPrint();
       }
       return;
     }
@@ -336,6 +358,7 @@ void CommandLine::runCommand(String input) {
     Serial.println(HELP_PROTOCOL_INFO_CMD);
     #ifdef STUDIO_ZY_ESP32
       Serial.println(F("diagnostics [--machine <tx>] - board, memory, reset and scan state"));
+      Serial.println(F("radiostatus [--machine <tx>] - driver AU country, channels and power"));
     #endif
     #ifdef HAS_SD
       Serial.println(HELP_BACKUP_SPIFFS_CMD);
@@ -632,15 +655,20 @@ void CommandLine::runCommand(String input) {
       machineResult(transaction_id, PROTOCOL_INFO_CMD, "error", "INVALID_TRANSACTION");
     else if (machine_arg >= 0) {
       #ifdef STUDIO_ZY_ESP32
+        char radio[512];
+        if(!marauder::studioRadioJson(radio, sizeof(radio))) {
+          machineResult(transaction_id, PROTOCOL_INFO_CMD, "error", "RADIO_REPORT_TOO_LARGE");
+          return;
+        }
         Serial.printf(
           "@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"protocolinfo\","
           "\"status\":\"success\",\"code\":\"OK\",\"firmware\":\"%s\","
           "\"profile\":\"%s\",\"build\":\"%s\","
-          "\"capabilities\":[\"wifi-2.4\",\"ble\",\"serial-pcap\",\"csi-motion\",\"diagnostics\"],"
+          "\"capabilities\":[\"wifi-2.4\",\"ble\",\"serial-pcap\",\"csi-motion\",\"diagnostics\",\"radio-au\"],"
           "\"hardware\":{\"gps\":false,\"sd\":false,\"display\":false,\"rgbLed\":false,\"batteryMonitor\":false,\"psram\":false},"
-          "\"flashBytes\":%u,\"uartBaud\":115200}\n",
+          "\"flashBytes\":%u,\"uartBaud\":115200,\"radio\":%s}\n",
           transaction_id.c_str(), version_number.c_str(), STUDIO_PROFILE_ID, STUDIO_BUILD_ID,
-          ESP.getFlashChipSize());
+          ESP.getFlashChipSize(), radio);
       #elif defined(HAS_SD)
         Serial.printf(
           "@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"protocolinfo\","
@@ -727,8 +755,22 @@ void CommandLine::runCommand(String input) {
     int ch_set = this->argSearch(&cmd_args, "-s");
 
     if (ch_set != -1) {
-      wifi_scan_obj.set_channel = cmd_args.get(ch_set + 1).toInt();
-      wifi_scan_obj.changeChannel();
+      #ifdef STUDIO_ZY_ESP32
+        double requested;
+        if(!parseFiniteNumber(cmd_args.get(ch_set + 1), requested) ||
+           requested != floor(requested) || requested < 1 || requested > MAX_CHANNEL) {
+          marauder::studioRadioValidateChannel(0);
+          Serial.println(F("RADIO_ERROR: AU channels are 1-13"));
+          return;
+        }
+        if(!wifi_scan_obj.changeChannel(static_cast<int>(requested))) {
+          Serial.println(F("RADIO_ERROR: channel change failed; see radiostatus"));
+          return;
+        }
+      #else
+        wifi_scan_obj.set_channel = cmd_args.get(ch_set + 1).toInt();
+        wifi_scan_obj.changeChannel();
+      #endif
       Serial.println(wifi_scan_obj.set_channel);
     }
     Serial.println(wifi_scan_obj.set_channel);
