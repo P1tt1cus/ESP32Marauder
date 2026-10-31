@@ -1,4 +1,9 @@
 #include "CommandLine.h"
+#include "StudioSupport.h"
+#ifdef STUDIO_ZY_ESP32
+#include "esp_heap_caps.h"
+#include "esp_system.h"
+#endif
 
 // GCOVR_EXCL_START -- serial protocol output depends on Arduino Serial.
 namespace {
@@ -271,31 +276,91 @@ void CommandLine::runCommand(String input) {
 
   LinkedList<String> cmd_args = this->parseCommand(input, " ");
   
+  #ifdef STUDIO_ZY_ESP32
+    const char* unsupported = marauder::studioUnsupportedReason(
+      cmd_args.get(0).c_str(), cmd_args.get(1).c_str(), cmd_args.get(2).c_str());
+    // Check settings regardless of argument ordering.
+    int setting_switch = this->argSearch(&cmd_args, "-s");
+    if(cmd_args.get(0) == SETTINGS_CMD && setting_switch >= 0 &&
+       !marauder::studioSettingSupported(cmd_args.get(setting_switch + 1).c_str()))
+      unsupported = "Setting is not supported by this board";
+    int portal_switch = this->argSearch(&cmd_args, "-c");
+    if(cmd_args.get(0) == EVIL_PORTAL_CMD && portal_switch >= 0 &&
+       cmd_args.get(portal_switch + 1) == "sethtml")
+      unsupported = "ESP32 SD HTML files are unavailable; use serial HTML";
+    if(unsupported) {
+      Serial.print(F("UNSUPPORTED: "));
+      Serial.println(unsupported);
+      return;
+    }
+    if(cmd_args.get(0) == "diagnostics") {
+      int machine_arg = this->argSearch(&cmd_args, "--machine");
+      String tx = machine_arg >= 0 ? cmd_args.get(machine_arg + 1) : "";
+      if(machine_arg >= 0 && !validTransactionId(tx)) {
+        machineResult(tx, "diagnostics", "error", "INVALID_TRANSACTION");
+        return;
+      }
+      const unsigned largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+      if(machine_arg >= 0) {
+        Serial.printf("@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"diagnostics\",\"status\":\"success\",\"code\":\"OK\",\"profile\":\"%s\",\"chip\":\"%s\",\"flashBytes\":%u,\"cpuMHz\":%u,\"freeHeap\":%u,\"minimumHeap\":%u,\"largestBlock\":%u,\"resetReason\":%d,\"scanMode\":%d,\"serialCapture\":%s,\"uptimeMs\":%lu}\n",
+          tx.c_str(), STUDIO_PROFILE_ID, ESP.getChipModel(), ESP.getFlashChipSize(), ESP.getCpuFreqMHz(),
+          ESP.getFreeHeap(), ESP.getMinFreeHeap(), largest, (int)esp_reset_reason(),
+          wifi_scan_obj.currentScanMode, wifi_scan_obj.save_serial ? "true" : "false", (unsigned long)millis());
+      } else {
+        Serial.printf("Studio ZY-ESP32\nChip: %s / %u MHz\nFlash: %u bytes\nHeap free/min: %u / %u\nLargest block: %u\nReset reason: %d\nScan mode: %d\nUART: 115200\nUptime: %lu ms\n",
+          ESP.getChipModel(), ESP.getCpuFreqMHz(), ESP.getFlashChipSize(), ESP.getFreeHeap(),
+          ESP.getMinFreeHeap(), largest, (int)esp_reset_reason(), wifi_scan_obj.currentScanMode, (unsigned long)millis());
+      }
+      return;
+    }
+  #endif
+
   //// Admin commands
   // Help
   if (cmd_args.get(0) == HELP_CMD) {
     Serial.println(HELP_HEAD);
     Serial.println(HELP_CH_CMD);
     Serial.println(HELP_SETTINGS_CMD);
+    #ifdef HAS_GPS
     Serial.println(HELP_GEOFENCE_CMD);
+    #endif
     Serial.println(HELP_CLEARAP_CMD_A);
     Serial.println(HELP_REBOOT_CMD);
+    #ifdef HAS_SD
     Serial.println(HELP_UPDATE_CMD_A);
+    #endif
+    #ifdef HAS_SD
     Serial.println(HELP_LS_CMD);
+    #endif
     // GCOVR_EXCL_START -- hardware-only command help entry.
     Serial.println(HELP_PROTOCOL_INFO_CMD);
+    #ifdef STUDIO_ZY_ESP32
+      Serial.println(F("diagnostics [--machine <tx>] - board, memory, reset and scan state"));
+    #endif
     #ifdef HAS_SD
       Serial.println(HELP_BACKUP_SPIFFS_CMD);
       Serial.println(HELP_BACKUP_STATUS_CMD);
       Serial.println(HELP_RESTORE_SPIFFS_CMD);
     #endif
     // GCOVR_EXCL_STOP
+    #ifdef HAS_NEOPIXEL_LED
     Serial.println(HELP_LED_CMD);
+    #endif
+    #ifdef HAS_GPS
     Serial.println(HELP_GPS_DATA_CMD);
+    #endif
+    #ifdef HAS_GPS
     Serial.println(HELP_GPS_CMD);
+    #endif
+    #ifdef HAS_GPS
     Serial.println(HELP_NMEA_CMD);
+    #endif
+    #ifdef HAS_GPS
     Serial.println(HELP_GPS_POI_CMD);
+    #endif
+    #ifdef HAS_GPS
     Serial.println(HELP_GPS_TRACKER_CMD);
+    #endif
     Serial.println(HELP_RECON_CMD);
     
     // WiFi sniff/scan
@@ -346,8 +411,12 @@ void CommandLine::runCommand(String input) {
     Serial.println(HELP_SEL_CMD_A);
     Serial.println(HELP_SSID_CMD_A);
     Serial.println(HELP_SSID_CMD_B);
+    #ifdef HAS_SD
     Serial.println(HELP_SAVE_CMD);
+    #endif
+    #ifdef HAS_SD
     Serial.println(HELP_LOAD_CMD);
+    #endif
     Serial.println(HELP_JOIN_CMD);
     Serial.println(HELP_MAC_CMD_A);
     Serial.println(HELP_MAC_CMD_B);
@@ -355,7 +424,9 @@ void CommandLine::runCommand(String input) {
     Serial.println(HELP_MAC_CMD_D);
     Serial.println(HELP_ADD_CMD_A);
     Serial.println(HELP_ADD_CMD_B);
+    #ifdef HAS_GPS
     Serial.println(HELP_UPLOAD_CMD);
+    #endif
 
     // Bluetooth sniff/scan
     #ifdef HAS_BT
@@ -365,7 +436,9 @@ void CommandLine::runCommand(String input) {
       Serial.println(HELP_BT_SPOOFAT_CMD);
       Serial.println(HELP_BT_SKIM_CMD);
     #endif
+    #ifdef HAS_SCREEN
     Serial.println(HELP_BRIGHTNESS_CMD);
+    #endif
     Serial.println(HELP_FOOT);
     return;
   }
@@ -558,7 +631,17 @@ void CommandLine::runCommand(String input) {
     if (machine_arg >= 0 && !validTransactionId(transaction_id))
       machineResult(transaction_id, PROTOCOL_INFO_CMD, "error", "INVALID_TRANSACTION");
     else if (machine_arg >= 0) {
-      #ifdef HAS_SD
+      #ifdef STUDIO_ZY_ESP32
+        Serial.printf(
+          "@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"protocolinfo\","
+          "\"status\":\"success\",\"code\":\"OK\",\"firmware\":\"%s\","
+          "\"profile\":\"%s\",\"build\":\"%s\","
+          "\"capabilities\":[\"wifi-2.4\",\"ble\",\"serial-pcap\",\"csi-motion\",\"diagnostics\"],"
+          "\"hardware\":{\"gps\":false,\"sd\":false,\"display\":false,\"rgbLed\":false,\"batteryMonitor\":false,\"psram\":false},"
+          "\"flashBytes\":%u,\"uartBaud\":115200}\n",
+          transaction_id.c_str(), version_number.c_str(), STUDIO_PROFILE_ID, STUDIO_BUILD_ID,
+          ESP.getFlashChipSize());
+      #elif defined(HAS_SD)
         Serial.printf(
           "@MARAUDER:{\"protocol\":1,\"tx\":\"%s\",\"command\":\"protocolinfo\","
           "\"status\":\"success\",\"code\":\"OK\",\"firmware\":\"%s\","

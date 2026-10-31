@@ -1,3 +1,4 @@
+#include "StudioSupport.h"
 #include "settings.h"
 
 static JsonObject findSavedWifiSetting(DynamicJsonDocument& json) {
@@ -524,6 +525,9 @@ void Settings::printJsonSettings(String json_string) {
   Serial.println("Settings\n----------------------------------------------");
   for (int i = 0; i < (int)json["Settings"].size(); i++) {
     String setting_name = json["Settings"][i]["name"].as<String>();
+    #ifdef STUDIO_ZY_ESP32
+      if(!marauder::studioSettingSupported(setting_name.c_str())) continue;
+    #endif
     Serial.println("Name: " + setting_name);
     Serial.println("Type: " + json["Settings"][i]["type"].as<String>());
     if (setting_name == "ClientPW" || setting_name == SAVED_WIFI_KEY_NAME)

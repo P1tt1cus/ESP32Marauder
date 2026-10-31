@@ -1,0 +1,275 @@
+name: Studio ZY-ESP32 build
+on:
+  push:
+    branches: [studio]
+  pull_request:
+    branches: [studio]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: studio-esp32-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  compile_sketch:
+    name: build ${{ matrix.board.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        board:
+          - { name: "Studio ZY-ESP32",                    flag: "STUDIO_ZY_ESP32",               fbqn: "esp32:esp32:d32:PartitionScheme=min_spiffs",                                                    file_name: "studio_zy_esp32",              tft: false, tft_file: "",                                   build_dir: "d32",                        addr: "0x1000",   idf_ver: "3.3.4",    nimble_ver: "2.3.8",   esp_async: "bigbrodude6119/ESPAsyncWebServer",    esp_async_ver: "master" }
+          
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          
+      - name: Test Studio profile
+        run: python3 tools/test_studio_profile.py
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "/home/runner/work/ESP32Marauder/ESP32Marauder/bin" >> $GITHUB_PATH
+          export PATH=$PATH:/home/runner/work/ESP32Marauder/ESP32Marauder/bin
+          arduino-cli version
+
+      #- name: Install Arduino-ESP32 Core v${{ matrix.board.idf_ver }}
+      #  run: |
+      #    arduino-cli core update-index
+      #    arduino-cli core install esp32:esp32@${{ matrix.board.idf_ver }}
+
+      - name: Verify Installed Cores
+        run: arduino-cli core list
+
+      - name: Build TestFile with ESP32 v${{ matrix.board.idf_ver }}
+        uses: ArminJo/arduino-test-compile@v3.2.1
+        with:
+          sketch-names: TestFile.ino
+          arduino-board-fqbn: esp32:esp32:esp32s2
+          arduino-platform: esp32:esp32@${{ matrix.board.idf_ver }}
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/${{ matrix.board.idf_ver }}/package_esp32_dev_index.json
+
+      - name: Verify Installed Cores Again
+        run: arduino-cli core list
+          
+      - name: Show Arduino dir structure
+        run: |
+          find /home/runner/.arduino15/packages/esp32/hardware/
+          
+      - name: Install ESP32Ping
+        uses: actions/checkout@v2
+        with:
+          repository: marian-craciunescu/ESP32Ping
+          ref: 1.6
+          path: CustomESP32Ping
+          
+      - name: Install AsyncTCP
+        uses: actions/checkout@v2
+        with:
+          repository: ESP32Async/AsyncTCP
+          ref: v3.4.8
+          path: CustomAsyncTCP
+          
+      - name: Install MicroNMEA
+        uses: actions/checkout@v2
+        with:
+          repository: stevemarple/MicroNMEA
+          ref: v2.0.6
+          path: CustomMicroNMEA
+          
+      - name: Install ESPAsyncWebServer
+        uses: actions/checkout@v2
+        with:
+          repository: ESP32Async/ESPAsyncWebServer
+          ref: v3.8.1
+          path: CustomESPAsyncWebServer
+      
+      #- name: Install ESPAsyncWebServer
+      #  run: |
+      #    cp -r libraries/ESPAsyncWebServer ./CustomESPAsyncWebServer
+          
+      - name: Install TFT_eSPI
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ matrix.board.tft_repo || 'Bodmer/TFT_eSPI' }}
+          ref: ${{ matrix.board.tft_ref || 'V2.5.34' }}
+          path: CustomTFT_eSPI
+
+      - name: Install XPT2046_Touchscreen
+        uses: actions/checkout@v2
+        with:
+          repository: PaulStoffregen/XPT2046_Touchscreen
+          ref: v1.4
+          path: CustomXPT2046_Touchscreen
+
+      - name: Install lv_arduino
+        uses: actions/checkout@v2
+        with:
+          repository: lvgl/lv_arduino
+          ref: 3.0.0
+          path: Customlv_arduino
+
+      - name: Install JPEGDecoder
+        uses: actions/checkout@v2
+        with:
+          repository: Bodmer/JPEGDecoder
+          ref: 1.8.0
+          path: CustomJPEGDecoder
+
+      - name: Install NimBLE-Arduino
+        uses: actions/checkout@v2
+        with:
+          repository: h2zero/NimBLE-Arduino
+          ref: ${{ matrix.board.nimble_ver }}
+          path: CustomNimBLE-Arduino
+
+      - name: Install Adafruit_NeoPixel
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_NeoPixel
+          ref: 1.12.0
+          path: CustomAdafruit_NeoPixel
+
+      - name: Install APA102 for LilyGo T-Dongle C5
+        if: matrix.board.flag == 'MARAUDER_T_DONGLE_C5'
+        uses: actions/checkout@v4
+        with:
+          repository: pololu/apa102-arduino
+          ref: 3.0.0
+          path: CustomAPA102
+
+      - name: Install ArduinoJson
+        uses: actions/checkout@v2
+        with:
+          repository: bblanchon/ArduinoJson
+          ref: v6.18.2
+          path: CustomArduinoJson
+          
+      - name: Install LinkedList
+        uses: actions/checkout@v2
+        with:
+          repository: ivanseidel/LinkedList
+          ref: v1.3.3
+          path: CustomLinkedList
+          
+      - name: Install EspSoftwareSerial
+        uses: actions/checkout@v2
+        with:
+          repository: plerup/espsoftwareserial
+          ref: 8.1.0
+          path: CustomEspSoftwareSerial
+          
+      - name: Install Adafruit_BusIO
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_BusIO
+          ref: 1.15.0
+          path: CustomAdafruit_BusIO
+          
+      - name: Install Adafruit_MAX1704X
+        uses: actions/checkout@v2
+        with:
+          repository: adafruit/Adafruit_MAX1704X
+          ref: 1.0.2
+          path: CustomAdafruit_MAX1704X
+
+      - name: Install Adafruit_TCA8418
+        run: cp -r libraries/Adafruit_TCA8418 CustomAdafruit_TCA8418
+
+      - name: Show Libraries
+        run: |
+          find /home/runner/ -name "Custom*"
+          
+      - name: Configure TFT_eSPI
+        run: |
+          rm -f CustomTFT_eSPI/User_Setup_Select.h
+          cp User*.h CustomTFT_eSPI/
+          pwd
+          ls -la
+          ls -la CustomTFT_eSPI
+
+      - name: Install Esptool
+        run: |
+          pip install esptool
+
+      - name: Modify platform.txt
+        run: |
+          if [[ ${{ matrix.board.idf_ver }} == "2.0.11" ]]; then
+            for i in $(find /home/runner/.arduino15/packages/esp32/hardware/esp32/ -name "platform.txt"); do
+              sed -i 's/compiler.c.elf.libs.esp32c3=/compiler.c.elf.libs.esp32c3=-zmuldefs /' "$i"
+              sed -i 's/compiler.c.elf.libs.esp32s3=/compiler.c.elf.libs.esp32s3=-zmuldefs /' "$i"
+              sed -i 's/compiler.c.elf.libs.esp32s2=/compiler.c.elf.libs.esp32s2=-zmuldefs /' "$i"
+              sed -i 's/compiler.c.elf.libs.esp32=/compiler.c.elf.libs.esp32=-zmuldefs /' "$i"
+              sed -i 's/-fexceptions/-fno-exceptions/g' "$i"
+              cat "$i" | grep compiler.c.elf.libs.esp32c3
+              cat "$i" | grep compiler.c.elf.libs.esp32s3
+              cat "$i" | grep compiler.c.elf.libs.esp32s2
+              cat "$i" | grep compiler.c.elf.libs.esp32
+            done
+          fi
+          
+          if [[ ${{ matrix.board.idf_ver }} == "3.3.4" ]]; then
+            for i in $(find /home/runner/.arduino15/packages/esp32/hardware/esp32/ -name "platform.txt"); do
+              sed -i 's/compiler.c.elf.extra_flags=/compiler.c.elf.extra_flags=-Wl,-zmuldefs /' "$i"
+            done
+            for f in $(find /home/runner/.arduino15/packages/esp32/tools/esp32-arduino-libs/ -name "cpp_flags"); do
+              sed -i 's/-fexceptions/-fno-exceptions/g' "$f"
+            done
+          fi
+          
+      - name: Configure TFT_eSPI (if needed)
+        run: |
+          if [[ ${{ matrix.board.tft }} == true ]]; then
+            setup_file="$GITHUB_WORKSPACE/CustomTFT_eSPI/User_Setup_Select.h"
+            setup_header="$GITHUB_WORKSPACE/CustomTFT_eSPI/${{ matrix.board.tft_file }}"
+            test -f "$setup_file"
+            test -f "$setup_header"
+            sed -i 's|^//#include <${{ matrix.board.tft_file }}>|#include <${{ matrix.board.tft_file }}>|' "$setup_file"
+            grep -Fqx '#include <${{ matrix.board.tft_file }}>' "$setup_file" || {
+              echo "::error::Failed to select ${{ matrix.board.tft_file }} in TFT_eSPI"
+              exit 1
+            }
+          fi
+
+      - name: Configure LilyGo T-Dongle C5 partition table
+        if: matrix.board.flag == 'MARAUDER_T_DONGLE_C5'
+        run: cp installer/partitions/t_dongle_c5.csv esp32_marauder/partitions.csv
+
+      - name: Build Marauder for ${{ matrix.board.name }}
+        uses: ArminJo/arduino-test-compile@v3.3.0
+        with:
+          sketch-names: esp32_marauder.ino
+          arduino-board-fqbn: ${{ matrix.board.fbqn }}
+          extra-arduino-cli-args: "--warnings none --build-property compiler.cpp.extra_flags='-D${{ matrix.board.flag }}'"
+          arduino-platform: esp32:esp32@${{ matrix.board.idf_ver }}
+          platform-url: https://github.com/espressif/arduino-esp32/releases/download/${{ matrix.board.idf_ver }}/package_esp32_dev_index.json
+
+      #- name: Rename Marauder ${{ matrix.board.name }} bin
+      #  run: |
+      #    mv ./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}/esp32_marauder.ino.bin ./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}/esp32_marauder.${{ matrix.board.file_name }}.bin
+      
+      - name: Rename and Upload ${{ matrix.board.name }} Artifact
+        run: |
+          VERSION=$(grep '#define MARAUDER_VERSION' ./esp32_marauder/configs.h | sed -E 's/.*"v([^"]+)"/v\1/' | tr '.' '_')
+          DATE=$(date +%Y%m%d)
+
+          BUILD_DIR=./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}
+          INPUT_BIN=$BUILD_DIR/esp32_marauder.ino.bin
+          OUTPUT_BIN=esp32_marauder_${VERSION}_${DATE}_${{ matrix.board.file_name }}.bin
+          VERSION_DOT=${VERSION_DOT}
+
+          mv "$INPUT_BIN" "$BUILD_DIR/$OUTPUT_BIN"
+
+          echo "artifact_name=$OUTPUT_BIN" >> $GITHUB_ENV
+          echo "artifact_path=$BUILD_DIR/$OUTPUT_BIN" >> $GITHUB_ENV
+      - name: Upload ${{ matrix.board.name }} Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifact_name }}
+          path: ./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}/
+          if-no-files-found: error
+          retention-days: 14

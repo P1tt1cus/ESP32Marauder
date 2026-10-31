@@ -1,3 +1,5 @@
+#include "configs.h"
+#ifdef HAS_SD
 #include "SDInterface.h"
 #include "lang_var.h"
 
@@ -598,3 +600,5 @@ bool SDInterface::performUpdate(Stream &updateSource, size_t updateSize) {
     return false;
   }
 }
+
+#endif // HAS_SD

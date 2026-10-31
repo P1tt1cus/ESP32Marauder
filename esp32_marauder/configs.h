@@ -53,6 +53,13 @@
     #define MARAUDER_PANCAKE
     #define MARAUDER_WS_C5_35_OVERRIDE
   #endif
+  // Reuse the original ESP32 pin/platform mapping, then narrow its peripherals.
+  #ifdef STUDIO_ZY_ESP32
+    #if defined(CONFIG_IDF_TARGET) && !defined(CONFIG_IDF_TARGET_ESP32)
+      #error "STUDIO_ZY_ESP32 requires the original ESP32 chip"
+    #endif
+    #define ESP32_LDDB
+  #endif
   //// END BOARD TARGETS
 
   // The official Arduino board package supplies this identifier for the XIAO
@@ -83,7 +90,9 @@
   #define MODE_CUSTOM 4
 
   //// HARDWARE NAMES
-  #ifdef MARAUDER_M5STICKC
+  #ifdef STUDIO_ZY_ESP32
+    #define HARDWARE_NAME "Studio ZY-ESP32"
+  #elif defined(MARAUDER_M5STICKC)
     #define HARDWARE_NAME "M5Stick-C Plus"
   #elif defined(MARAUDER_M5STICKCP2)
     #define HARDWARE_NAME "M5Stick-C Plus2"
@@ -764,6 +773,8 @@
     #undef HAS_SD
     #undef USE_SD
   #endif
+
+  #include "StudioProfile.h"
 
   // Conserve internal RAM on every supported target that has neither PSRAM
   // nor an ESP32-C5. C5 targets retain their full capacities even when a
