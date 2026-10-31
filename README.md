@@ -1,3 +1,41 @@
+# Studio ESP32 firmware
+
+Personal maintained fork: [P1tt1cus/ESP32Marauder](https://github.com/P1tt1cus/ESP32Marauder).
+Our default branch is `studio`; `origin` is our fork and `upstream` is the original.
+The initial branch starts at **v1.20.0 / 511bb3694d0c4dc064888e762bde44fcc9b7f48a**,
+the release verified on our ZY-ESP32. This setup commit changes documentation
+and records the target; it does not change or flash the installed firmware.
+
+## Our target
+
+`studio-target.json` records the **ESP32_LDDB** profile for a standard ESP32 with
+4 MB flash, UART0 at 115200, no configured ESP SD or GPS. This is not the official
+Flipper ESP32-S2 Wi-Fi board. The paired projects are
+[the companion UI](https://github.com/P1tt1cus/flipperzero-wifi-marauder) and
+[Flipper firmware](https://github.com/P1tt1cus/Momentum-Firmware).
+
+The upstream Arduino build recipe is `.github/workflows/build_parallel.yml`,
+using its **ESP32 LDDB** matrix entry. Its core is Arduino ESP32 3.3.4 and NimBLE
+2.3.8. The recipe also installs and patches dependencies; a plain sketch compile
+or `pio run` is not an equivalent firmware build. Some upstream dependencies
+use moving branches. Pin those before producing a reproducible custom release.
+No new firmware binary has been built as part of this source-fork setup.
+
+Initialize pinned library submodules with:
+
+```sh
+git submodule update --init --recursive
+```
+
+See `test/README.md` for native tests. Work on branches from `studio`, review
+upstream updates separately, and validate changes against this board before
+releasing. Preserve upstream license and attribution. Keep credentials,
+captures, and personal device data out of source control.
+
+---
+
+## Upstream documentation
+
 <!---[![License: MIT](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/justcallmekoko/ESP32Marauder/blob/master/LICENSE)--->
 <!---[![Gitter](https://badges.gitter.im/justcallmekoko/ESP32Marauder.png)](https://gitter.im/justcallmekoko/ESP32Marauder)--->
 <!---[![Build Status](https://travis-ci.com/justcallmekoko/ESP32Marauder.svg?branch=master)](https://travis-ci.com/justcallmekoko/ESP32Marauder)--->
