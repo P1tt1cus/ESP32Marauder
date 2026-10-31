@@ -41,14 +41,29 @@ same data is included in protocolinfo and machine diagnostics. Read-only
 queries never initialize/start Wi-Fi; inactive channel/power are `null`.
 The paired Studio 1.3 companion displays these readings and validates them
 before showing AU confirmation. Legacy companions still accept protocolinfo.
-Build/runtime status (2026-10-31): host/native checks and the target build pass
-([CI run 41201143370](https://github.com/P1tt1cus/ESP32Marauder/actions/runs/41201143370),
-source `a77fad3`). The application is 1,410,944 bytes and fits the 0x1e0000 slot;
-its partition table matches the recorded installed baseline. This does not
-replace reading the actual device table before flashing. No ESP32 USB adapter
-was enumerated, so the firmware remains **unflashed and unverified at runtime**.
-Verified artifacts and their manifest are retained locally in the ignored
-`.artifacts/studio.2-au/` directory.
+Installation/runtime status (2026-10-31): **studio.2-au is installed** on our
+ESP32-D0WD-V3 revision 3.1, 4 MB board. Host/native checks and target CI pass
+([build run 41201143370](https://github.com/P1tt1cus/ESP32Marauder/actions/runs/41201143370),
+source `a77fad3`). The 1,410,944-byte application was flashed only at `0x10000`
+and verified. Actual partition/OTA data matched the recorded baseline. NVS,
+SPIFFS, partition and OTA bytes were read before/after and remained unchanged.
+
+Direct USB checks confirmed profile/build/capabilities, rejection of channels
+0/14/256, and passive operation on channels 13 and 1. The driver reported AU,
+manual policy, channels 1–13, actual TX maximum **70 quarter-dBm (17.5 dBm)**,
+and zero radio errors. The configured cap remains 80 quarter-dBm (20 dBm).
+After `stopscan`, active/verified became false and channel/power unavailable.
+No active RF operation was tested. GPIO companion screen verification is pending.
+Artifacts, hashes and radio-only runtime evidence are retained locally in ignored
+`.artifacts/studio.2-au/`; no network identifiers/captures are retained there.
+
+USB connection note: manual BOOT/EN worked when the serial port was already open.
+Esptool closes its port on failed `connect()`, so merely keeping a Python process
+alive does not keep the connection open. A persistent serial client with inactive
+DTR/RTS then connected through the default reset sequence and remained open
+through flash/readback/boot checks. A bare ROM `flash_id()` before attaching flash
+returned `0xffffff`; after the RAM stub and `attach_flash()`, the correct ID was
+`0x16405e` (4 MB). Do not interpret the unattached result as a failed flash chip.
 
 Build with `.github/workflows/studio-build.yml`: Arduino ESP32 **3.3.4**, NimBLE
 **2.3.8**, `esp32:esp32:d32:PartitionScheme=min_spiffs`. This follows the upstream
