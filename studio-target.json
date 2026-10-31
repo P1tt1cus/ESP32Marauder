@@ -1,20 +1,33 @@
 {
-  "profile": "studio-zy-esp32-lddb",
+  "profile": "studio-zy-esp32",
   "upstream": "https://github.com/justcallmekoko/ESP32Marauder",
   "baseline_tag": "v1.20.0",
   "baseline_commit": "511bb3694d0c4dc064888e762bde44fcc9b7f48a",
   "board": "ZY-ESP32",
   "chip": "ESP32-D0WD-V3",
   "flash_bytes": 4194304,
-  "build_flag": "ESP32_LDDB",
+  "build_flag": "STUDIO_ZY_ESP32",
   "fqbn": "esp32:esp32:d32:PartitionScheme=min_spiffs",
   "arduino_esp32_version": "3.3.4",
   "nimble_version": "2.3.8",
   "upstream_build_recipe": ".github/workflows/build_parallel.yml",
   "upstream_matrix_board": "ESP32 LDDB",
-  "uart": {"baud": 115200, "rx_gpio": 3, "tx_gpio": 1},
+  "uart": {
+    "baud": 115200,
+    "rx_gpio": 3,
+    "tx_gpio": 1
+  },
   "gps_available": false,
   "esp_sd_attached": false,
   "companion_repo": "https://github.com/P1tt1cus/flipperzero-wifi-marauder",
-  "flipper_firmware_repo": "https://github.com/P1tt1cus/Momentum-Firmware"
+  "flipper_firmware_repo": "https://github.com/P1tt1cus/Momentum-Firmware",
+  "build_recipe": ".github/workflows/studio-build.yml",
+  "base_profile": "ESP32_LDDB",
+  "esp_sd_enabled": false,
+  "rgb_led_enabled": false,
+  "display_enabled": false,
+  "battery_monitor_enabled": false,
+  "psram_enabled": false,
+  "serial_capture_enabled": true,
+  "build_id": "studio.1"
 }

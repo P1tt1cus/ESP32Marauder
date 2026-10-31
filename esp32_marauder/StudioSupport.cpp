@@ -18,7 +18,7 @@ const char* studioUnsupportedReason(const char* command, const char* option, con
   if(equals(command, "led")) return "No configured RGB LED";
   if(equals(command, "brightness")) return "Use the Flipper display controls";
   if(equals(command, "settings") && equals(option, "-s") && !studioSettingSupported(value)) return "Setting is not supported by this board";
-  if(equals(command, "evilportal") && equals(option, "-c") && equals(value, "sethtml")) return "ESP32 SD HTML files are unavailable; use serial HTML";
+  if(equals(command, "evilportal") && ((equals(option, "-c") && equals(value, "sethtml")) || equals(option, "-w"))) return "ESP32 SD HTML files are unavailable; use serial HTML";
   return nullptr;
 }
 }

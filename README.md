@@ -2,24 +2,41 @@
 
 Personal maintained fork: [P1tt1cus/ESP32Marauder](https://github.com/P1tt1cus/ESP32Marauder).
 Our default branch is `studio`; `origin` is our fork and `upstream` is the original.
-The initial branch starts at **v1.20.0 / 511bb3694d0c4dc064888e762bde44fcc9b7f48a**,
-the release verified on our ZY-ESP32. This setup commit changes documentation
-and records the target; it does not change or flash the installed firmware.
+The custom profile is based on **v1.20.0 / 511bb3694d0c4dc064888e762bde44fcc9b7f48a**,
+the release verified on our ZY-ESP32. Building does not flash the connected device.
 
 ## Our target
 
-`studio-target.json` records the **ESP32_LDDB** profile for a standard ESP32 with
-4 MB flash, UART0 at 115200, no configured ESP SD or GPS. This is not the official
-Flipper ESP32-S2 Wi-Fi board. The paired projects are
-[the companion UI](https://github.com/P1tt1cus/flipperzero-wifi-marauder) and
-[Flipper firmware](https://github.com/P1tt1cus/Momentum-Firmware).
+`studio-target.json` records **STUDIO_ZY_ESP32**, profile `studio-zy-esp32`, build
+`studio.1`: ESP32-D0WD-V3, 4 MB flash, UART0 at 115200. It inherits LDDB's chip,
+BLE and CSI configuration, then removes SD, GPS, RGB LED, screen/touch controls,
+battery monitoring and PSRAM support. This is not the official ESP32-S2 board.
+The existing no-PSRAM memory limits remain in place.
 
-The upstream Arduino build recipe is `.github/workflows/build_parallel.yml`,
-using its **ESP32 LDDB** matrix entry. Its core is Arduino ESP32 3.3.4 and NimBLE
-2.3.8. The recipe also installs and patches dependencies; a plain sketch compile
-or `pio run` is not an equivalent firmware build. Some upstream dependencies
-use moving branches. Pin those before producing a reproducible custom release.
-No new firmware binary has been built as part of this source-fork setup.
+The paired [companion](https://github.com/P1tt1cus/flipperzero-wifi-marauder)
+removes commands for the absent peripherals. Captures still stream over UART
+with `-serial` to the **Flipper's SD**; keep `SavePCAP` enabled for capture output.
+SPIFFS remains for settings. ESP-side SD list/save/load, backup/restore, SD updates,
+GPS/wardrive/geofence/upload, LED and brightness commands explicitly return
+`UNSUPPORTED`. Serial HTML loading remains supported; SD HTML paths do not.
+Legacy settings/script fields can remain on disk for compatibility.
+
+`protocolinfo --machine studio` reports profile, build, supported capabilities
+and absent hardware. `diagnostics` reports chip, flash, heap, reset reason, scan
+mode and uptime; `diagnostics --machine <tx>` returns structured protocol 1 JSON.
+These commands do not start a radio scan.
+
+Build with `.github/workflows/studio-build.yml`: Arduino ESP32 **3.3.4**, NimBLE
+**2.3.8**, `esp32:esp32:d32:PartitionScheme=min_spiffs`. This follows the upstream
+LDDB recipe with our build flag. `platformio.ini` runs native tests, not firmware.
+CI checks the linked ELF for absent peripheral drivers and retained serial
+capture/BLE/CSI, then publishes the application, bootloader, partition table,
+merged image, ELF and map. Do not flash the merged image over existing data as a
+routine upgrade; verify the device and partition layout first.
+
+Run `python3 tools/test_studio_profile.py` and
+`python3 tools/test_spiffs_machine_protocol.py` for host checks. Firmware build
+success is separate from boot/UART verification on the physical board.
 
 Initialize pinned library submodules with:
 

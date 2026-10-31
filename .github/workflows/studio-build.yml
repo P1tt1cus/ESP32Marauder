@@ -252,6 +252,12 @@ jobs:
       #  run: |
       #    mv ./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}/esp32_marauder.ino.bin ./esp32_marauder/build/esp32.esp32.${{ matrix.board.build_dir }}/esp32_marauder.${{ matrix.board.file_name }}.bin
       
+      - name: Verify linked hardware profile
+        run: |
+          NM_TOOL=$(find "$HOME/.arduino15" -type f -name xtensa-esp32-elf-nm | head -n 1)
+          test -n "$NM_TOOL"
+          python3 tools/check_studio_binary.py esp32_marauder/build/esp32.esp32.d32/esp32_marauder.ino.elf --nm "$NM_TOOL"
+
       - name: Rename and Upload ${{ matrix.board.name }} Artifact
         run: |
           VERSION=$(grep '#define MARAUDER_VERSION' ./esp32_marauder/configs.h | sed -E 's/.*"v([^"]+)"/v\1/' | tr '.' '_')

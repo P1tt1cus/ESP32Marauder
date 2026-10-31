@@ -14,12 +14,16 @@
   #include "Display.h"
   #include <LinkedList.h>
 #endif
+#ifdef HAS_SD
 #include "SDInterface.h"
+#endif
 #include "Buffer.h"
 #include "lang_var.h"
 
 extern Settings settings_obj;
+#ifdef HAS_SD
 extern SDInterface sd_obj;
+#endif
 #ifdef HAS_SCREEN
   extern Display display_obj;
 #endif

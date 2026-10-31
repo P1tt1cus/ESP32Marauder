@@ -31,6 +31,7 @@ int main() {
  assert(marauder::studioUnsupportedReason("evilportal", "-c", "sethtml"));
  assert(!marauder::studioUnsupportedReason("evilportal", "-c", "sethtmlstr"));
  assert(!marauder::studioUnsupportedReason("evilportal", "-c", "start"));
+ assert(marauder::studioUnsupportedReason("evilportal", "-w", "index.html"));
  assert(marauder::studioUnsupportedReason("settings", "-s", "EnableLED"));
  assert(!marauder::studioUnsupportedReason("settings", "-s", "SavePCAP"));
  assert(!marauder::studioUnsupportedReason("gpsnotacommand"));

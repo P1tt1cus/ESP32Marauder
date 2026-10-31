@@ -2830,6 +2830,7 @@ void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {
     RunEapolScan(scan_mode, color);
   else if (scan_mode == WIFI_SCAN_AP)
     RunBeaconScan(scan_mode, color);
+  #ifdef HAS_GPS
   else if (scan_mode == WIFI_SCAN_WAR_DRIVE) {
     this->reloadGeofences();
     this->geofence_paused = false;
@@ -2843,6 +2844,7 @@ void WiFiScan::StartScan(uint8_t scan_mode, uint16_t color) {
     // corrupted the wardrive status-bar typography.
     this->updateGeofenceState(true);
   }
+  #endif
   else if (scan_mode == WIFI_SCAN_SIG_STREN)
     RunRawScan(scan_mode, color);    
   else if (scan_mode == WIFI_SCAN_RAW_CAPTURE)
@@ -6507,9 +6509,11 @@ void WiFiScan::executeWarDrive() {
 }
 
 void WiFiScan::reloadGeofences() {
+  #ifdef HAS_GPS
   for (uint8_t i = 0; i < MAX_GEOFENCES; i++)
     settings_obj.loadGeofence(i, this->geofences[i]);
   this->last_geofence_check = 0;
+  #endif
 }
 
 bool WiFiScan::updateGeofenceState(bool force) {

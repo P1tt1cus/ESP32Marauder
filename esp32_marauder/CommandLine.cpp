@@ -286,7 +286,7 @@ void CommandLine::runCommand(String input) {
       unsupported = "Setting is not supported by this board";
     int portal_switch = this->argSearch(&cmd_args, "-c");
     if(cmd_args.get(0) == EVIL_PORTAL_CMD && portal_switch >= 0 &&
-       cmd_args.get(portal_switch + 1) == "sethtml")
+       (cmd_args.get(portal_switch + 1) == "sethtml" || this->argSearch(&cmd_args, "-w") >= 0))
       unsupported = "ESP32 SD HTML files are unavailable; use serial HTML";
     if(unsupported) {
       Serial.print(F("UNSUPPORTED: "));
@@ -925,6 +925,7 @@ void CommandLine::runCommand(String input) {
     else if (cmd_args.get(0) == PACKET_COUNT_CMD) {
       this->startScanFromCLI(WIFI_SCAN_PACKET_RATE, TFT_ORANGE, "Packet Count Scan");
     }
+    #ifdef HAS_GPS
     // Geofence configuration
     else if (cmd_args.get(0) == GEOFENCE_CMD) {
       if (cmd_args.size() == 2 && cmd_args.get(1) == "list") {
@@ -968,6 +969,7 @@ void CommandLine::runCommand(String input) {
       }
       else Serial.println(HELP_GEOFENCE_CMD);
     }
+    #endif
     // Wardrive
     else if (cmd_args.get(0) == WARDRIVE_CMD) {
       #ifdef HAS_GPS
@@ -1012,7 +1014,9 @@ void CommandLine::runCommand(String input) {
     // AP Scan
     else if (cmd_args.get(0) == EVIL_PORTAL_CMD) {
       int cmd_sw = this->argSearch(&cmd_args, "-c");
+      #ifdef HAS_SD
       int html_sw = this->argSearch(&cmd_args, "-w");
+      #endif
 
       if (cmd_sw != -1) {
         String et_command = cmd_args.get(cmd_sw + 1);
@@ -1023,6 +1027,7 @@ void CommandLine::runCommand(String input) {
             display_obj.clearScreen();
             menu_function_obj.drawStatusBar();
           #endif
+          #ifdef HAS_SD
           if (html_sw != -1) {
             String target_html_name = cmd_args.get(html_sw + 1);
             evil_portal_obj.target_html_name = target_html_name;
@@ -1030,6 +1035,7 @@ void CommandLine::runCommand(String input) {
             Serial.print(F("Set html file as "));
             Serial.println(evil_portal_obj.target_html_name);
           }
+          #endif
           //else {
           //  evil_portal_obj.target_html_name = "index.html";
           //}
@@ -1041,6 +1047,7 @@ void CommandLine::runCommand(String input) {
         else if (et_command == "ack") {
           
         }
+        #ifdef HAS_SD
         else if (et_command == "sethtml") {
           String target_html_name = cmd_args.get(cmd_sw + 2);
           evil_portal_obj.target_html_name = target_html_name;
@@ -1048,6 +1055,7 @@ void CommandLine::runCommand(String input) {
           Serial.print(F("Set html file as "));
           Serial.println(evil_portal_obj.target_html_name);
         }
+        #endif
         else if (et_command == "sethtmlstr") {
           evil_portal_obj.setHtmlFromSerial();
         }
@@ -1600,6 +1608,7 @@ void CommandLine::runCommand(String input) {
       #endif
     }
 
+    #ifdef HAS_GPS
     // Wardrive POI command
     else if (cmd_args.get(0) == WARDRIVEPOI_CMD) {
       if (wifi_scan_obj.currentScanMode == WIFI_SCAN_WAR_DRIVE ||
@@ -1621,6 +1630,7 @@ void CommandLine::runCommand(String input) {
       //}
     }
 
+    #endif
     // Update command
     if (cmd_args.get(0) == UPDATE_CMD) {
       int sd_sw = this->argSearch(&cmd_args, "-s"); // SD Update
