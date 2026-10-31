@@ -41,8 +41,14 @@ same data is included in protocolinfo and machine diagnostics. Read-only
 queries never initialize/start Wi-Fi; inactive channel/power are `null`.
 The paired Studio 1.3 companion displays these readings and validates them
 before showing AU confirmation. Legacy companions still accept protocolinfo.
-Build/runtime status: host checks pass; target build and USB runtime checks
-are in progress. This source change has not yet been flashed to our board.
+Build/runtime status (2026-10-31): host/native checks and the target build pass
+([CI run 41201143370](https://github.com/P1tt1cus/ESP32Marauder/actions/runs/41201143370),
+source `a77fad3`). The application is 1,410,944 bytes and fits the 0x1e0000 slot;
+its partition table matches the recorded installed baseline. This does not
+replace reading the actual device table before flashing. No ESP32 USB adapter
+was enumerated, so the firmware remains **unflashed and unverified at runtime**.
+Verified artifacts and their manifest are retained locally in the ignored
+`.artifacts/studio.2-au/` directory.
 
 Build with `.github/workflows/studio-build.yml`: Arduino ESP32 **3.3.4**, NimBLE
 **2.3.8**, `esp32:esp32:d32:PartitionScheme=min_spiffs`. This follows the upstream
