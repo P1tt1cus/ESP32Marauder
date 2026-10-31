@@ -29,5 +29,21 @@
   "battery_monitor_enabled": false,
   "psram_enabled": false,
   "serial_capture_enabled": true,
-  "build_id": "studio.1"
+  "build_id": "studio.2-au",
+  "wifi_country": "AU",
+  "wifi_channels": [
+    1,
+    13
+  ],
+  "wifi_country_auto": false,
+  "wifi_tx_power_cap_qdbm": 80,
+  "linker_wrappers": [
+    "esp_wifi_init",
+    "esp_wifi_start",
+    "esp_wifi_stop",
+    "esp_wifi_deinit",
+    "esp_wifi_set_channel",
+    "esp_wifi_set_max_tx_power",
+    "esp_wifi_set_config"
+  ]
 }

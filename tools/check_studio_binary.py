@@ -14,7 +14,10 @@ for forbidden in ('fs::SDFS::', 'SDInterface::', 'GPSInterface::', 'MicroNMEA::'
                   'Settings::saveGeofence(', 'Settings::clearGeofence('):
     if forbidden in symbols:
         raise SystemExit('Unsupported hardware code linked: '+forbidden)
-for required in ('Buffer::saveSerial()', 'NimBLEDevice::init(', 'CsiMotionMonitor::start('):
+for required in ('Buffer::saveSerial()', 'NimBLEDevice::init(', 'CsiMotionMonitor::start(',
+                 '__wrap_esp_wifi_init', '__wrap_esp_wifi_start', '__wrap_esp_wifi_stop',
+                 '__wrap_esp_wifi_deinit', '__wrap_esp_wifi_set_channel',
+                 '__wrap_esp_wifi_set_max_tx_power', '__wrap_esp_wifi_set_config'):
     if required not in symbols:
         raise SystemExit('Missing supported feature: '+required)
 if b'studio-zy-esp32' not in args.elf.read_bytes():

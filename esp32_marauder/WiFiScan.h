@@ -4,6 +4,7 @@
 #define WiFiScan_h
 
 #include "configs.h"
+#include "StudioRadio.h"
 #include "utils.h"
 #include "GpsTrackerStats.h"
 #include "IBeacon.h"
@@ -201,7 +202,11 @@
 #define MAX_DISPLAY_ENTRIES 1 // Max Unique MACs to display
 #define MAX_PINESCAN_ENTRIES 100 // PineScan Max Entries
 
-#define MAX_CHANNEL     14
+#ifdef STUDIO_ZY_ESP32
+#define MAX_CHANNEL 13
+#else
+#define MAX_CHANNEL 14
+#endif
 
 #define MAX_PORT 65535
 
@@ -1093,6 +1098,7 @@ class WiFiScan
           .magic = WIFI_INIT_CONFIG_MAGIC\
       };
     #else
+      #ifndef STUDIO_ZY_ESP32
       wifi_country_t country = {
         .cc = "PH",
         .schan = 1,
@@ -1100,6 +1106,14 @@ class WiFiScan
         .policy = WIFI_COUNTRY_POLICY_AUTO,
       };
 
+      #endif
+      esp_err_t configureCountry() {
+        #ifdef STUDIO_ZY_ESP32
+          return marauder::studioRadioApply();
+        #else
+          return esp_wifi_set_country(&country);
+        #endif
+      }
       wifi_init_config_t cfg2 = WIFI_INIT_CONFIG_DEFAULT();
     #endif
 
@@ -1174,7 +1188,7 @@ class WiFiScan
     bool savePendingWifiCredential(uint8_t replace_index);
     void discardPendingWifiCredential();
     void getMAC(bool get_sta, uint8_t* mac);
-    void changeChannel(int chan = -1);
+    bool changeChannel(int chan = -1);
     void RunAPInfo(uint16_t index, bool do_display = true);
     void RunInfo();
     bool setStationSelected(uint16_t index, bool selected);

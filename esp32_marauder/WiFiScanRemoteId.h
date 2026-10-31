@@ -259,7 +259,7 @@ void WiFiScan::RunRemoteIdScan(uint8_t scan_mode, uint16_t color) {
 
   esp_wifi_init(&cfg2);
   #ifdef HAS_IDF_3
-    esp_wifi_set_country(&country);
+    configureCountry();
     esp_event_loop_create_default();
   #endif
   setWiFiMode(WIFI_MODE_NULL, remoteIdWifiCallback);
